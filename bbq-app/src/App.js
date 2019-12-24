@@ -53,7 +53,6 @@ var json_output =
 class App extends Component {
   constructor(props) {
     super(props);
-    this.handleDoneTempChange = this.handleDoneTempChange.bind(this);
   }
   render() {
     let {temps, isLoading, desiredShadow} = this.state;
@@ -72,20 +71,18 @@ class App extends Component {
       return (
           <div>
           <h1> Set Point: {desiredShadow.set_point} </h1>
-          <h1> Done Point: {desiredShadow.done_point} </h1>
+          <h1> Done Point: {desiredShadow.done_temp} </h1>
           <h1> Fan State: {desiredShadow.status} </h1>
-          <Example temps={temps}/>
-          <Sldr/>
-          <img src="/fan.png" height="200" width="300"/>
           <form>
-          <fieldset>
-          Set Point:
-          <input type="text" setpoint="setPoint"/>
-          Done Temp:
-	  <input type="text" donetemp="doneTemp"
-	value={this.state.doneTemp} onChange={this.handleDoneTempChange} />
-	  </fieldset>
+            <fieldset>
+              Set Point:
+          <input type="text" setpoint="setPoint" />
+              Done Temp:
+      	  <input type="text" donetemp="doneTemp" value={this.state.doneTemp} onChange={(e) => this.handleDoneTempChange(e)} onBlur={(e) => this.handleBlurTempChange(e)} />
+            </fieldset>
           </form>
+          <Sldr/>
+          <Example temps={temps}/>
           <ul>
           {temps.Items.map(item => (
               <li key={item.qtime}>
@@ -111,10 +108,14 @@ class App extends Component {
   };
 
   handleDoneTempChange(event) {
-    console.log("changing done temp: ",this.state.doneTemp);
-    console.log('input event',event);
-    this.setState({doneTemp: event.target.value});    
-    fetch('https://5tvo1710vk.execute-api.us-east-1.amazonaws.com/prod/bbqshadow/desired/done_temp?value='+this.state.doneTemp, {
+    console.log("changing done temp: ", this.state.doneTemp);
+    console.log('input event', event);
+    this.setState({ doneTemp: event.target.value });
+  }
+  handleBlurTempChange(event) {
+    console.log("changing done temp: ", this.state.doneTemp);
+    console.log('blur event', event);
+    fetch('https://5tvo1710vk.execute-api.us-east-1.amazonaws.com/prod/bbqshadow/desired/done_temp?value=' + event.target.value, {
       method: 'POST',
       body: JSON.stringify({
         newSetPoint: this.state.value,
@@ -122,8 +123,31 @@ class App extends Component {
       })
     })
   }
-  
+
   componentDidMount() {
+    console.log("component mounted");
+    var apiRequest1 = fetch('https://yb2g5joqs7.execute-api.us-east-1.amazonaws.com/prod/bbqctrl2').then(function (response) {
+      return response.json()
+    });
+    var apiRequest2 = fetch('https://5tvo1710vk.execute-api.us-east-1.amazonaws.com/prod/bbqshadow/desired').then(function (response) {
+      return response.json()
+    });
+    var combinedData = { "apiRequest1": {}, "apiRequest2": {} };
+    //    Promise.all([apiRequest1, apiRequest2]).then(function (values) {
+    Promise.all([apiRequest1, apiRequest2]).then((values) => {
+      combinedData["apiRequest1"] = values[0];
+      combinedData["apiRequest2"] = values[1];
+      console.log("combinedData", combinedData);
+      console.log("combinedData", combinedData["apiRequest1"]);
+      console.log("combinedData", combinedData["apiRequest2"]);
+      console.log("this", this);
+      this.setState({
+        temps: combinedData["apiRequest1"], desiredShadow: combinedData["apiRequest2"], isLoading: false
+      }); // this.setState
+    }); // .then
+  };
+  
+  componentDidMount2() {
     console.log("component mounted");
     //fetch('https://yb2g5joqs7.execute-api.us-east-1.amazonaws.com/prod/bbqctrl')
     fetch('https://yb2g5joqs7.execute-api.us-east-1.amazonaws.com/prod/bbqctrl2')
