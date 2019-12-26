@@ -1,7 +1,6 @@
 // git status
 // git add <files>
 // git commit -m "message"
-// git put origin master
 
 
 import React, { Component, PureComponent } from 'react';
