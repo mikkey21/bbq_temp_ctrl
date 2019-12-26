@@ -1,4 +1,10 @@
-import React, {Component, PureComponent} from 'react';
+// git status
+// git add <files>
+// git commit -m "message"
+// git put origin master
+
+
+import React, { Component, PureComponent } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
@@ -144,9 +150,32 @@ class App extends Component {
       this.setState({
         temps: combinedData["apiRequest1"], desiredShadow: combinedData["apiRequest2"], isLoading: false
       }); // this.setState
+      this.getData();
     }); // .then
   };
-  
+
+  componentWillUnmount() {
+    /*
+      stop getData() from continuing to run even
+      after unmounting this component. Notice we are calling
+      'clearTimeout()` here rather than `clearInterval()` as
+      in the previous example.
+    */
+    clearTimeout(this.intervalID);
+  }
+
+  getData = () => {
+    console.log("component mounted");
+    fetch('https://yb2g5joqs7.execute-api.us-east-1.amazonaws.com/prod/bbqctrl2')
+      .then(res => res.json())
+      .then((data) => {
+        this.setState({ temps: data, isLoading: false });
+        // call getData() again in 5 seconds
+        this.intervalID = setTimeout(this.getData.bind(this), 5000);
+      })
+      .catch(console.log)
+  }
+
   componentDidMount2() {
     console.log("component mounted");
     //fetch('https://yb2g5joqs7.execute-api.us-east-1.amazonaws.com/prod/bbqctrl')
